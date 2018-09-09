@@ -11,6 +11,8 @@ import com.amazonaws.services.s3.model.*;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class AWSInteraction {
@@ -333,6 +335,65 @@ public class AWSInteraction {
         }
     }
 
+    public List<String> searchJsonDataList (String bucketName, String batchId, String keyFromSearch, String keyToSearch){
+
+        try
+        {
+            AmazonS3 s3Client = createS3Client();
+            HashSet<String> keys = new HashSet<>();
+            System.out.println("list all the data in batch: " + batchId);
+            ListObjectsV2Request req = new ListObjectsV2Request().withBucketName(bucketName).withPrefix(batchId);
+            ListObjectsV2Result result;
+
+            do {
+                result = s3Client.listObjectsV2(req);
+                int toKey = 0;
+                int fromKey = 0;
+                if (keyToSearch != null && keyToSearch.length() > 0 ) { toKey = Integer.parseInt(keyToSearch); }
+                if (keyFromSearch != null && keyFromSearch.length() > 0 ) { fromKey = Integer.parseInt(keyFromSearch); }
+
+
+                System.out.println("from key: " + fromKey);
+                System.out.println("to key: " + toKey);
+
+                for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
+                    System.out.printf(" - %s (size: %d)\n", objectSummary.getKey(), objectSummary.getSize());
+                    String key = objectSummary.getKey();
+                    String[] splittedKey = key.split("/");
+                    if (splittedKey.length < 2) return null;
+                    String tmpKey = splittedKey[1];
+                    String[] tmp = tmpKey.split("-");
+                    if (tmp.length != 2) return null;
+                    int start = Integer.parseInt(tmp[0]);
+                    int end = Integer.parseInt(tmp[1]);
+                    if ((toKey == 0 && fromKey == 0) ||
+                            ((fromKey == 0 || start >= fromKey)  &&  (toKey == 0 || end <= toKey))){
+                        keys.add(tmpKey);
+                    }
+                }
+                // If there are more than maxKeys keys in the bucket, get a continuation token
+                // and list the next objects.
+                String token = result.getNextContinuationToken();
+                req.setContinuationToken(token);
+            } while (result.isTruncated());
+
+            String[] keyArray = new String[keys.size()];
+            keys.toArray(keyArray);
+            Arrays.sort(keyArray);
+            return Arrays.asList(keyArray);
+        }
+        catch(AmazonServiceException e)
+        {
+            //log.log(Level.SEVERE, e.getMessage(), e);
+            return null;
+        }
+        catch(Exception ex)
+        {
+            //log.log(Level.SEVERE, ex.getMessage(), ex);
+            return null;
+        }
+    }
+
     private static String displayTextInputStream(InputStream input) throws IOException {
         // Read the text input stream one line at a time and display each line.
         BufferedReader reader = new BufferedReader(new InputStreamReader(input));
@@ -348,4 +409,3 @@ public class AWSInteraction {
 
 
 }
-
