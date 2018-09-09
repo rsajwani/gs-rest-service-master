@@ -3,6 +3,8 @@ package hello;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.joda.time.DateTime;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -145,6 +147,17 @@ public class GreetingController {
         }
 
         return ShoeStepWithStatus.toJsonList(list);
+    }
+
+    @RequestMapping("/searchBatches")
+    public List<String> searchBatches(@RequestParam(value="FromBatch", defaultValue="") String fromBatch,
+                                  @RequestParam(value="ToBatch", defaultValue="") String toBatch,
+                                  @RequestParam(value="Count", defaultValue="no data.") String count,
+                                  @RequestParam(value="Filter", defaultValue="no data.") String filter) {
+
+        AWSInteraction awsInteraction = new AWSInteraction();
+
+        return awsInteraction.searchJsonDataList(BUCKET_NAME, BATCH_FOLDER_NAME, fromBatch, toBatch);
     }
 
     private static Comparator<ProductionStep> shoeStepComparator = new Comparator<ProductionStep>() {
