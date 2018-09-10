@@ -19,7 +19,7 @@ public class AWSInteraction {
 
     private AWSCredentials credentials;
     public AWSInteraction (){
-        credentials = new BasicAWSCredentials("AKIAIGXCYPNXXZCDEP3A", "+75QPTpjYq3LDDo6LOz3idjaEKdc7KlAZqggcptG");
+        credentials = new BasicAWSCredentials("", "");
 
     }
 
